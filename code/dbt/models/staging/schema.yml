@@ -1,0 +1,70 @@
+version: 2
+
+sources:
+  - name: staging
+    database: citi-bike-trip-data-pipeline
+    schema: citibike_dataset
+
+    tables:
+      - name: citibike_tripdata_partitoned_clustered
+
+models:
+  - name: stg_citibike_tripdata
+    description: "NYC Citi Bike trip data for 2022 and 2023"
+    columns:
+      - name: ride_id
+        data_type: string
+        description: "Ride ID (primary key)"
+        tests:
+          - unique:
+              severity: warn
+          - not_null:
+              severity: warn
+
+      - name: start_station_id
+        data_type: string
+        description: "Trip start station ID"
+
+      - name: end_station_id
+        data_type: string
+        description: "Trip end station ID"
+
+      - name: started_at
+        data_type: timestamp
+        description: "Trip start timestamp"
+
+      - name: ended_at
+        data_type: timestamp
+        description: "Trip end timestamp"
+
+      - name: start_station_name
+        data_type: string
+        description: "Trip start station name"
+
+      - name: end_station_name
+        data_type: string
+        description: "Trip end station name"
+
+      - name: start_lat
+        data_type: float64
+        description: "Trip start latitude"
+
+      - name: start_lng
+        data_type: float64
+        description: "Trip start longitude"
+
+      - name: end_lat
+        data_type: float64
+        description: "Trip end latitude"
+
+      - name: end_lng
+        data_type: float64
+        description: "Trip end longitude"
+
+      - name: rideable_type
+        data_type: string
+        description: "Ride type - classic or electric bike"
+
+      - name: member_casual
+        data_type: string
+        description: "Member or casual rider"
