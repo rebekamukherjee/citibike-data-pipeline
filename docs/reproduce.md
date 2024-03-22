@@ -38,7 +38,8 @@ Install the **HashiCorp Terraform** extension in VSCode.
 
 Make the following changes in the file `code\terraform\variables.tf`:
 - Change the **project name** to match your GCP project name
-- Change the **Google Cloud Storage bucket name**. It must be a unique value
+![](res/gcp-project-name.png)
+- Change the **Google Cloud Storage bucket name**. <u>It must be a unique value!</u>
 - (optional) Change the **Big Query dataset name**
 - (optional) Change the **region** and **location** depending on where you are located
 
@@ -48,15 +49,169 @@ Navigate to the code location by running the following command in command prompt
 - Run `terraform apply`
     - When it asks to **"Enter a value:"** to continue, enter `yes`
 
-Check GCP if the resources were created.
+Check GCP to see if the resources were created.
 
 ## Load data to Google Cloud Storage with Mage.ai
 
-TODO: Load from API (zip)
-TODO: Unzip
-TODO: Column type conversions
-TODO: csv -> pq using pyarrow
-TODO: Load into GCS
+### Configure Mage
+
+Start by cloning the [mage-zoomcamp](https://github.com/mage-ai/mage-zoomcamp) repo by running the following command: `git clone https://github.com/mage-ai/mage-zoomcamp.git mage-zoomcamp`
+
+- I copied the contents of the repo to a folder called `mage`.
+- Rename `dev.env` to simply `.env`. This will ensure the file is not committed to Git by accident, since it will contain credentials in the future.
+- In the `.env` file, change the name of the project to `mage-citibike`.
+
+To build the Docker container, navigate to the code location in command prompt by running `cd code\mage` and then run `docker compose build`.
+
+To start the Docker container, run `docker compose up`.
+
+Then, navigate to http://localhost:6789 in the browser.
+
+We just initialized a new mage repository. It will be present in the project under the name `mage-citibike`.
+
+### ETL: API to GCS
+
+Create a new *Batch* **pipeline** and rename it to `api_to_gcs`
+
+Create a *Python API* **data loader** called `load_api_data` and replace the template code with the following:
+
+```python
+import io
+import pandas as pd
+import requests
+from zipfile import ZipFile
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data_from_api(*args, **kwargs):
+
+    # define data types of the fields in the data
+    citibike_dtypes = {
+        'ride_id':str,
+        'rideable_type':str,
+        'start_station_name':str,
+        'start_station_id':str,
+        'end_station_name':str,
+        'end_station_id':str,
+        'start_lat':float,
+        'start_lng':float,
+        'end_lat':float,
+        'end_lng':float,
+        'member_casual':str,
+    }
+
+    # identify fields that are dates
+    parse_dates = ['started_at', 'ended_at']
+
+    # configure the URL using year and month
+    year = kwargs['execution_date'].year
+    month = kwargs['execution_date'].month
+    if month < 10:
+        month = '0' + str(month)
+    else:
+        month = str(month)
+    url = f'https://s3.amazonaws.com/tripdata/JC-{year}{month}-citibike-tripdata.csv.zip'
+    
+    # read the ZIP file from the URL
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Failed to download ZIP file from {url}")
+
+    with ZipFile(io.BytesIO(response.content)) as zip_file:
+        # get the list of files inside the ZIP archive
+        file_list = zip_file.namelist()
+        
+        # filter out the desired CSV files
+        csv_files = [file_name for file_name in file_list if file_name.endswith('.csv') and '/' not in file_name]
+        if len(csv_files) == 0:
+            raise ValueError("Expected one CSV file inside the ZIP archive.")
+        
+        # read the CSV files and concatenate multiple files
+        data = []
+        for csv_file in csv_files:
+            with zip_file.open(csv_file) as file:
+                data.append(pd.read_csv(file, sep=',', dtype=citibike_dtypes, parse_dates=parse_dates))
+        data = pd.concat(data)
+        print (f'Shape of the data: {data.shape}')
+
+        return data
+
+
+@test
+def test_output(output, *args) -> None:
+
+    assert output is not None, 'The output is undefined'
+```
+
+Next, create a *Generic Python* **transformer** called `transform_data` and replace the template code with the following:
+
+```python
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@transformer
+def transform(data, *args, **kwargs):
+
+    # create a new column started_at_date by converting started_at to a date
+    data['started_at_date'] = data['started_at'].dt.date
+
+    # create a new column ended_at_date by converting ended_at to a date
+    data['ended_at_date'] = data['ended_at'].dt.date
+
+    return data
+
+
+@test
+def test_output(output, *args) -> None:
+
+    assert output is not None, 'The output is undefined'
+```
+
+Next, Create a *Python Google Cloud Storage* **data exporter** called `export_gcs_paritioned` and replace the template code with the following:
+
+```python
+import pyarrow as pa
+import pyarrow.parquet as pq
+import os
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/home/src/keys/creds.json"
+project_id = 'citi-bike-trip-data-pipeline'
+bucket_name = 'citibike_bucket_rebekam'
+table_name = 'citibike_tripdata'
+root_path = f'{bucket_name}/{table_name}'
+
+
+@data_exporter
+def export_data_to_google_cloud_storage(data, *args, **kwargs):
+    table = pa.Table.from_pandas(data)
+    gcs = pa.fs.GcsFileSystem()
+    pq.write_to_dataset(
+        table,
+        root_path=root_path,
+        partition_cols=['started_at_date'],
+        filesystem=gcs
+    )
+```
+
+Finally, in the Mage console navigate to **Backfills** from the left menu. Create a new backfill with the following details and save changes. Then click on **Start backfill**.
+
+![](res/mage-backfill.png)
+
+Once all the pipelines have run, check GCS bucket to see if the paritioned files have loaded.
+
+![](res/gcs-bucket-parquet-files.png)
+
+To exit the container run `Ctrl+C` in the command prompt followed by `docker compose down`.
 
 ## Data Warehousing in BigQuery
 
