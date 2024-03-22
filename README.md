@@ -2,7 +2,15 @@
 
 This is my submission for [Data Engineering Zoomcamp 2024](https://github.com/DataTalksClub/data-engineering-zoomcamp) final project.
 
-## Problem Description/ Overview
+## Problem Description
+
+Citi Bike is a public bicycle sharing system serving  New York City. In this project I have created a pipeline for Citi Bike trip data between `Jan 2022` and `Dec 2023` to answer the following questions:
+
+- Where do Citi Bikers ride?
+- When do they ride?
+- How far do they go?
+- Which stations are most popular?
+- What days of the week are most rides taken on?
 
 ## Data
 
@@ -34,11 +42,10 @@ The data includes the following fields:
 
 ## Data Pipeline
 
-TODO: insert diagram
+![](docs/res/data-flow-diagram.png)
 
-## Data Visualization/ Dashboard
+## Data Visualization
 
-## Next Steps
 
 ## Reproduce Project
 

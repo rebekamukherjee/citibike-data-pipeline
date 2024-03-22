@@ -295,7 +295,12 @@ dbt does not allow us to work on the main branch after this, hence we need to cr
 
 ### Build the dbt project
 
-Open the file `code\dbt\models\core\fact_citibike_trips.sql` in the dbt console. If we click on the **Lineage** tab in the bottom, we should see this diagram:
+Go to the file `code\dbt\models\staging\schema.yml` in the dbt console
+- Change `database` to your BigQuery dataset name
+- Change `schema` to your BigQuery schema name
+- Save changes
+
+If we click on the **Lineage** tab in the bottom, we should see this diagram:
 
 ![](res/dbt-lineage.png)
 
@@ -314,8 +319,15 @@ Now, if we navigate to BigQuery we will be able to see the tables created by dbt
 
 ## Visualize with Looker Studio
 
-TODO: 2 slides to visualize the data
+Navigate to [Google Looker Studio](https://lookerstudio.google.com/). 
 
+Click on **Create** > **Data source** > **BigQuery** > authorize BigQuery > select the Project (`Citi Bike Trip Data Pipeline`) > Dataset (`dbt_rmukherjee`) > Table (`fact_citibike_trips`) > **CONNECT**.
+
+![](res/looker-studio-bigquery.png)
+
+Change the default aggregation of categorical fields from `Sum` to `None`. Then, click on **CREATE REPORT** > **ADD TO REPORT**.
+
+Rename the report to **Citi Bike Trip Data Analysis**.
 
 ## Teardown resources
 
