@@ -23,8 +23,6 @@ The data includes the following fields:
 - End Longitude
 - Member or casual ride
 
-Link: https://s3.amazonaws.com/tripdata/JC-202312-citibike-tripdata.csv.zip
-
 ## Technologies Used
 
 - **Terraform** (infrastructure as code)
@@ -44,6 +42,4 @@ TODO: insert diagram
 
 ## Reproduce Project
 
-TODO: link to markdown file with instructions
-
-TODO: record video of project walkthrough
+To reproduce the project and test the code yourself, follow these [instructions](docs/reproduce.md).

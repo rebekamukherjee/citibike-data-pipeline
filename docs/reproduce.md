@@ -16,7 +16,17 @@ To setup a Service Account, navigate to **IAM & Admin** > **Service Accounts** f
 - BigQuery Admin
 - Storage Admin
 
-Next, click on the ellipse next to the newly created service account, and select **Manage keys**. Click on **ADD KEY** > **Create new key** > select **JSON** key type > **CREATE**. A key will be downloaded to our machine. Save the key in the project directory under the sub-directory `code/keys` and in a file called `creds.json`.
+Next, click on the ellipse next to the newly created service account, and select **Manage keys**. Click on **ADD KEY** > **Create new key** > select **JSON** key type > **CREATE**. A key will be downloaded to our machine.
+
+1. Navigate to the terraform directory
+    ```bash
+    cd code/terraform
+    ```
+2. Create a subfolder `keys/` in the terraform directory
+    ```bash
+    mkdir keys
+    ```
+3. Save the key in the `keys/` subfolder in a file called `creds.json`
 
 > Make sure the subfolder `keys/` is added to `.gitignore`
 
@@ -43,10 +53,22 @@ Make the following changes in the file `code\terraform\variables.tf`:
 - (optional) Change the **Big Query dataset name**
 - (optional) Change the **region** and **location** depending on where you are located
 
-Navigate to the code location by running the following command in command prompt: `cd code\terraform`.
-- Run `terraform init`
-- Run `terraform plan`
-- Run `terraform apply`
+1. Navigate to the terraform directory
+    ```bash
+    cd code/terraform
+    ```
+2. Get the terraform provider for GCP
+    ```bash
+    terraform init
+    ```
+3. View the terraform plan
+    ```bash
+    terraform plan
+    ```
+4. Create the resources
+    ```bash
+    terraform apply
+    ```
     - When it asks to **"Enter a value:"** to continue, enter `yes`
 
 Check GCP to see if the resources were created.
@@ -57,15 +79,26 @@ Check GCP to see if the resources were created.
 
 Start by cloning the [mage-zoomcamp](https://github.com/mage-ai/mage-zoomcamp) repo by running the following command: `git clone https://github.com/mage-ai/mage-zoomcamp.git mage-zoomcamp`
 
-- I copied the contents of the repo to a folder called `mage`.
-- Rename `dev.env` to simply `.env`. This will ensure the file is not committed to Git by accident, since it will contain credentials in the future.
-- In the `.env` file, change the name of the project to `mage-citibike`.
+- I copied the contents of the repo to a folder called `code/mage`
+- Rename `dev.env` to simply `.env`. This will ensure the file is not committed to Git by accident, since it will contain credentials in the future
+- In the `.env` file, change the name of the project to `mage-citibike`
+- Copy `creds.json` from `code/terraform/keys/` into `code/mage/keys`
 
-To build the Docker container, navigate to the code location in command prompt by running `cd code\mage` and then run `docker compose build`.
+> Make sure the subfolder `keys/` is added to `.gitignore`
 
-To start the Docker container, run `docker compose up`.
-
-Then, navigate to http://localhost:6789 in the browser.
+1. Navigate to the mage directory
+    ```bash
+    cd code\mage
+    ```
+2. Build the docker container
+    ```bash
+    docker compose build
+    ```
+3. Start the docker container
+    ```bash
+    docker compose up
+    ```
+4. Navigate to http://localhost:6789 in the browser
 
 We just initialized a new mage repository. It will be present in the project under the name `mage-citibike`.
 
@@ -241,10 +274,58 @@ FROM `citi-bike-trip-data-pipeline.citibike_dataset.external_citibike_tripdata`;
 
 ## Transformation with dbt
 
-TODO: transform
-TODO: document
-TODO: save back to Big Query
+### Create a dbt cloud project
+
+Create a dbt user account by going to [dbt homepage](https://www.getdbt.com/) and signing up for a free account.
+
+Non-enterprise account can have only one project. Navigate to **Account** > **Projects** to delete any old project. Now we can go to the homepage to setup a new project.
+
+![](res/dbt-project-name.png)
+
+Choose **BigQuery** as the data warehouse.
+- Upload the service account key json file in the create from file option. This will fill out most fields related to the production credentials.
+- Scroll down to the end of the page and set up the development credentials.
+- Click on **Test Connection** > **Next**.
+
+Finally, add this GitHub repository. Navigate to **Account** > **Projects** to specify the project subdirectory which is `code/dbt`.
+
+Navigate to **Develop** tab on the top to view the project.
+
+dbt does not allow us to work on the main branch after this, hence we need to create a new branch.
+
+### Build the dbt project
+
+Open the file `code\dbt\models\core\fact_citibike_trips.sql` in the dbt console. If we click on the **Lineage** tab in the bottom, we should see this diagram:
+
+![](res/dbt-lineage.png)
+
+To build the project run:
+```bash
+dbt build --select +fact_citibike_trips+
+```
+
+![](res/dbt-build.png)
+
+dbt docs can be generated on the cloud or locally with `dbt docs generate`, and can be hosted in dbt Cloud as well or on any other webserver by running `dbt docs serve`
+
+Now, if we navigate to BigQuery we will be able to see the tables created by dbt.
+
+![](res/bigquery-dbt-tables.png)
 
 ## Visualize with Looker Studio
 
 TODO: 2 slides to visualize the data
+
+
+## Teardown resources
+
+1. Navigate to the terraform directory
+    ```bash
+    cd code/terraform
+    ```
+2. Destroy resources created by terraform
+    ```bash
+    terraform destroy
+    ```
+3. Delete GCP service account(s)
+4. Delete GCP project
