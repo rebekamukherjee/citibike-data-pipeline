@@ -38,7 +38,7 @@ select
     end_station.is_renting as end_is_renting,
     end_station.is_returning as end_is_returning
 from citibike_tripdata
-inner join dim_citibike_stations as start_station
+left join dim_citibike_stations as start_station
 on citibike_tripdata.start_station_name = start_station.name
-inner join dim_citibike_stations as end_station
+left join dim_citibike_stations as end_station
 on citibike_tripdata.end_station_name = end_station.name
