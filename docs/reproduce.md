@@ -345,7 +345,51 @@ Click on **Create** > **Data source** > **BigQuery** > authorize BigQuery > sele
 
 Change the default aggregation of categorical fields from `Sum` to `None`. Then, click on **CREATE REPORT** > **ADD TO REPORT**.
 
-Rename the report to **Citi Bike Trip Data Analysis**.
+Rename the report as **Citi Bike Trip Data Analysis 2022-2023**.
+
+### Total Trips Recorded
+
+![](res/looker-total-trip-count.png)
+
+1. Create a calculated field `num_rides` = `Record Count`
+2. **Add a chart** > **Scorecard with compact numbers**
+3. Metric = `num_rides`
+
+### Top 10 Trip End Stations
+
+![](res/looker-top-10-stations.png)
+
+1. **Add a chart** > **Table**
+2. Dimension = `end_station_name`
+3. Metric = `num_rides`
+
+### Weekly Member Type Distribution
+
+![](res/looker-weekly-member-type.png)
+
+1. Create a calculated field `day` = `FORMAT_DATETIME("%A", started_at)`
+2. **Add a chart** > **Column chart**
+3. Dimension = `day`
+4. Breakdown Dimension = `member_casual`
+5. Metric = `num_rides`
+
+### Bike Type Distribution
+
+![](res/looker-bike-type.png)
+
+1. **Add a chart** > **Donut chart**
+2. Dimension = `rideable_type`
+3. Metric = `num_rides`
+
+### Monthly Bike Type Distribution
+
+![](res/looker-monthly-bike-type.png)
+
+1. Create a calculated field `month` = `MONTH(started_at)`
+2. **Add a chart** > **Smoothed time series chart**
+3. Dimension = `month`
+4. Breakdown Dimension = `rideable_type`
+5. Metric = `num_rides`
 
 ## Teardown resources
 
@@ -359,3 +403,5 @@ Rename the report to **Citi Bike Trip Data Analysis**.
     ```
 3. Delete GCP service account(s)
 4. Delete GCP project
+5. Delete dbt project
+6. Delete Looker Studio dashboard
