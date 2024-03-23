@@ -255,7 +255,7 @@ In the Google Cloud Platform console, navigate to BigQuery and run the following
 CREATE OR REPLACE EXTERNAL TABLE `citi-bike-trip-data-pipeline.citibike_dataset.external_citibike_tripdata`
 OPTIONS (
   format = 'PARQUET',
-  uris = ['gs://citibike_bucket_rebekam/citibike_tripdata/started_at_date=*/6fc6de18e20e49b885909902912ba6a8-0.parquet']
+  uris = ['gs://citibike_bucket_rebekam/citibike_tripdata/started_at_date=*.parquet']
 );
 
 -- create a partition and cluster table from external table
@@ -271,6 +271,14 @@ FROM `citi-bike-trip-data-pipeline.citibike_dataset.external_citibike_tripdata`;
 - Make sure the URI is correct
 
 ![](res/bigquery-tables.png)
+
+To test if the data has been correctly uploaded, run the following SQL code:
+```sql
+-- select distinct start months
+select distinct DATE_TRUNC(started_at_date, month)
+from `citi-bike-trip-data-pipeline.citibike_dataset.citibike_tripdata_partitoned_clustered`
+order by 1;
+```
 
 ## Transformation with dbt
 
@@ -316,6 +324,16 @@ dbt docs can be generated on the cloud or locally with `dbt docs generate`, and 
 Now, if we navigate to BigQuery we will be able to see the tables created by dbt.
 
 ![](res/bigquery-dbt-tables.png)
+
+To test if the data has been correctly uploaded, run the following SQL code:
+```sql
+select count(*)
+from `citi-bike-trip-data-pipeline.citibike_dataset.citibike_tripdata_partitoned_clustered`;
+
+select count(*)
+from `citi-bike-trip-data-pipeline.dbt_rmukherjee.fact_citibike_trips`;
+```
+Both should return `1887984`
 
 ## Visualize with Looker Studio
 

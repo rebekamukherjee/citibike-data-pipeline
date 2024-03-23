@@ -2,7 +2,7 @@
 CREATE OR REPLACE EXTERNAL TABLE `citi-bike-trip-data-pipeline.citibike_dataset.external_citibike_tripdata`
 OPTIONS (
   format = 'PARQUET',
-  uris = ['gs://citibike_bucket_rebekam/citibike_tripdata/started_at_date=*/6fc6de18e20e49b885909902912ba6a8-0.parquet']
+  uris = ['gs://citibike_bucket_rebekam/citibike_tripdata/started_at_date=*.parquet']
 );
 
 -- create a partition and cluster table from external table
